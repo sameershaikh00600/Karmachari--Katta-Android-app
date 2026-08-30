@@ -1,124 +1,51 @@
 package com.karmcharikatta.app;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
-import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SearchView;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.google.android.material.chip.ChipGroup;
-import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.google.android.material.card.MaterialCardView;
 
 public class MainActivity extends AppCompatActivity {
-
-    private static final String TAG = "MainActivity";
-    private RecyclerView recyclerView;
-    private DocumentAdapter adapter;
-    private List<DocumentModel> documentList;
-    private FirebaseFirestore db;
-    private ProgressBar progressBar;
-    private TextView textEmpty;
-    private SearchView searchView;
-    private ChipGroup chipGroupFilter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Initialize UI components
-        recyclerView = findViewById(R.id.recycler_view);
-        progressBar = findViewById(R.id.progress_bar);
-        textEmpty = findViewById(R.id.text_empty);
-        searchView = findViewById(R.id.search_view);
-        chipGroupFilter = findViewById(R.id.chip_group_filter);
+        // Dashboard Cards
+        MaterialCardView cardGr = findViewById(R.id.card_gr);
+        MaterialCardView cardPension = findViewById(R.id.card_pension);
+        MaterialCardView cardAllEmployees = findViewById(R.id.card_all_employees);
+        MaterialCardView cardMsrtc = findViewById(R.id.card_msrtc);
+        MaterialCardView cardNotice = findViewById(R.id.card_notice);
 
-        // Setup RecyclerView
-        documentList = new ArrayList<>();
-        adapter = new DocumentAdapter(documentList, this);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(adapter);
+        // Toolbar Buttons
+        ImageButton btnMenu = findViewById(R.id.btn_menu);
+        ImageButton btnSearch = findViewById(R.id.btn_search);
+        ImageButton btnNotification = findViewById(R.id.btn_notification);
 
-        // Initialize Firestore
-        db = FirebaseFirestore.getInstance();
+        // Set Click Listeners
+        cardGr.setOnClickListener(v -> openDocumentList("Government Resolutions (GR)"));
+        cardPension.setOnClickListener(v -> openDocumentList("Pension"));
+        cardAllEmployees.setOnClickListener(v -> openDocumentList("All"));
+        cardMsrtc.setOnClickListener(v -> openDocumentList("MSRTC"));
+        
+        cardNotice.setOnClickListener(v -> 
+            Toast.makeText(this, "Notifications enabled!", Toast.LENGTH_SHORT).show()
+        );
 
-        // Fetch Documents
-        fetchDocuments("All");
-
-        // Setup Search
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                adapter.getFilter().filter(query);
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                adapter.getFilter().filter(newText);
-                return false;
-            }
-        });
-
-        // Setup Filter Chips
-        chipGroupFilter.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            if (checkedIds.isEmpty()) {
-                fetchDocuments("All");
-            } else {
-                int id = checkedIds.get(0);
-                if (id == R.id.chip_all) fetchDocuments("All");
-                else if (id == R.id.chip_gr) fetchDocuments("Government Resolutions (GR)");
-                else if (id == R.id.chip_rules) fetchDocuments("Rules");
-                else if (id == R.id.chip_forms) fetchDocuments("Forms");
-            }
-        });
+        btnMenu.setOnClickListener(v -> Toast.makeText(this, "Menu Clicked", Toast.LENGTH_SHORT).show());
+        btnSearch.setOnClickListener(v -> openDocumentList("All"));
+        btnNotification.setOnClickListener(v -> Toast.makeText(this, "No new notifications", Toast.LENGTH_SHORT).show());
     }
 
-    private void fetchDocuments(String category) {
-        progressBar.setVisibility(View.VISIBLE);
-        Query query = db.collection("documents");
-
-        if (!category.equals("All")) {
-            query = query.whereEqualTo("category", category);
-        }
-
-        query.addSnapshotListener((value, error) -> {
-            progressBar.setVisibility(View.GONE);
-            if (error != null) {
-                Log.e(TAG, "Listen failed.", error);
-                Toast.makeText(MainActivity.this, "Error fetching data", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (value != null) {
-                documentList.clear();
-                for (DocumentChange dc : value.getDocumentChanges()) {
-                    if (dc.getType() == DocumentChange.Type.ADDED || dc.getType() == DocumentChange.Type.MODIFIED) {
-                        // In a real app, you'd handle specific changes, but for simplicity:
-                    }
-                }
-                // Convert entire snapshot to list
-                List<DocumentModel> fetchedDocuments = value.toObjects(DocumentModel.class);
-                documentList.addAll(fetchedDocuments);
-                adapter.updateList(documentList);
-
-                if (documentList.isEmpty()) {
-                    textEmpty.setVisibility(View.VISIBLE);
-                } else {
-                    textEmpty.setVisibility(View.GONE);
-                }
-            }
-        });
+    private void openDocumentList(String category) {
+        Intent intent = new Intent(this, DocumentListActivity.class);
+        intent.putExtra("CATEGORY", category);
+        startActivity(intent);
     }
 }
