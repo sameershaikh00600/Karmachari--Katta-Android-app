@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "190758876944",
+    "project_id": "velestateschool-2fb55",
+    "storage_bucket": "velestateschool-2fb55.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:190758876944:android:bacfaac47407528b2a5795",
+        "android_client_info": {
+          "package_name": "com.karmcharikatta.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJknf2b0YAod1dZ_k5N0gfc9HftqaxqmQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
