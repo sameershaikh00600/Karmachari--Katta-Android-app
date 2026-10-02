@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -207,10 +208,11 @@ public class AdminActivity extends AppCompatActivity {
         noticeMap.put("blogUrl", blogUrl);
         noticeMap.put("date", new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new Date()));
 
-        // Save entry in Firestore "notices" collection
+        // Save / Overwrite entry in Firestore "notices" collection at document "latest_notice"
         db.collection("notices")
-                .add(noticeMap)
-                .addOnSuccessListener(documentReference -> {
+                .document("latest_notice")
+                .set(noticeMap)
+                .addOnSuccessListener(aVoid -> {
                     progressNotice.setVisibility(View.GONE);
                     btnPublishNotice.setEnabled(true);
                     Toast.makeText(AdminActivity.this, "Notice Published Successfully!", Toast.LENGTH_LONG).show();

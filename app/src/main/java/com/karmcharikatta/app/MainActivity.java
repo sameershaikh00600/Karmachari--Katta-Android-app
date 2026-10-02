@@ -43,12 +43,11 @@ public class MainActivity extends AppCompatActivity {
         ImageButton btnSearch = findViewById(R.id.btn_search);
         ImageButton btnNotification = findViewById(R.id.btn_notification);
 
-        // Fetch Dynamic Notice from Firestore
+        // Fetch Dynamic Notice from Firestore (Listens to 'latest_notice' document)
         db.collection("notices")
-          .limit(1)
-          .addSnapshotListener((value, error) -> {
-              if (value != null && !value.isEmpty()) {
-                  DocumentSnapshot doc = value.getDocuments().get(0);
+          .document("latest_notice")
+          .addSnapshotListener((doc, error) -> {
+              if (doc != null && doc.exists()) {
                   String title = doc.getString("title");
                   String message = doc.getString("message");
                   String blogUrl = doc.getString("blogUrl");
