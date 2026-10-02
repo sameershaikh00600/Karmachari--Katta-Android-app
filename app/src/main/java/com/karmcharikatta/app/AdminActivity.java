@@ -29,7 +29,7 @@ import java.util.Map;
 public class AdminActivity extends AppCompatActivity {
 
     // Document Form Views
-    private TextInputEditText editDocTitle, editDocDepartment, editDocDate;
+    private TextInputEditText editDocTitle, editDocDepartment, editDocDate, editPdfUrl;
     private Spinner spinnerMainCategory, spinnerSubCategory;
     private TextView textSelectedFile;
     private MaterialButton btnSelectPdf, btnUploadDoc;
@@ -71,6 +71,7 @@ public class AdminActivity extends AppCompatActivity {
         editDocTitle = findViewById(R.id.edit_doc_title);
         editDocDepartment = findViewById(R.id.edit_doc_department);
         editDocDate = findViewById(R.id.edit_doc_date);
+        editPdfUrl = findViewById(R.id.edit_pdf_url);
         spinnerMainCategory = findViewById(R.id.spinner_main_category);
         spinnerSubCategory = findViewById(R.id.spinner_sub_category);
         textSelectedFile = findViewById(R.id.text_selected_file);
@@ -116,6 +117,7 @@ public class AdminActivity extends AppCompatActivity {
         String subCategory = spinnerSubCategory.getSelectedItem().toString();
         String department = editDocDepartment.getText() != null ? editDocDepartment.getText().toString().trim() : "";
         String dateStr = editDocDate.getText() != null ? editDocDate.getText().toString().trim() : "";
+        String pdfUrlInput = editPdfUrl.getText() != null ? editPdfUrl.getText().toString().trim() : "";
 
         if (title.isEmpty()) {
             editDocTitle.setError("Title is required");
@@ -123,8 +125,8 @@ public class AdminActivity extends AppCompatActivity {
             return;
         }
 
-        if (selectedPdfUri == null) {
-            Toast.makeText(this, "Please select a PDF file first!", Toast.LENGTH_SHORT).show();
+        if (pdfUrlInput.isEmpty() && selectedPdfUri == null) {
+            Toast.makeText(this, "Please enter a PDF URL or choose a PDF file!", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -135,41 +137,49 @@ public class AdminActivity extends AppCompatActivity {
         // Auto-generate date if left blank
         String finalDate = dateStr.isEmpty() ? new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date()) : dateStr;
 
-        // 1. Upload PDF File to Firebase Storage
-        String fileName = "pdf_" + System.currentTimeMillis() + ".pdf";
-        StorageReference storageRef = storage.getReference().child("pdfs/" + fileName);
+        if (!pdfUrlInput.isEmpty()) {
+            // Save directly using provided PDF URL
+            saveDocumentToFirestore(title, mainCategory, subCategory, department, finalDate, pdfUrlInput);
+        } else {
+            // 1. Upload PDF File to Firebase Storage
+            String fileName = "pdf_" + System.currentTimeMillis() + ".pdf";
+            StorageReference storageRef = storage.getReference().child("pdfs/" + fileName);
 
-        storageRef.putFile(selectedPdfUri)
-                .addOnSuccessListener(taskSnapshot -> storageRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
-                    String pdfUrl = downloadUri.toString();
+            storageRef.putFile(selectedPdfUri)
+                    .addOnSuccessListener(taskSnapshot -> storageRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
+                        String pdfUrl = downloadUri.toString();
+                        saveDocumentToFirestore(title, mainCategory, subCategory, department, finalDate, pdfUrl);
+                    }))
+                    .addOnFailureListener(e -> {
+                        progressUploadDoc.setVisibility(View.GONE);
+                        btnUploadDoc.setEnabled(true);
+                        Toast.makeText(AdminActivity.this, "Storage Upload Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        }
+    }
 
-                    // 2. Save Document entry in Firestore "documents" collection
-                    DocumentModel document = new DocumentModel(title, mainCategory, subCategory, department, finalDate, pdfUrl);
+    private void saveDocumentToFirestore(String title, String mainCategory, String subCategory, String department, String date, String pdfUrl) {
+        DocumentModel document = new DocumentModel(title, mainCategory, subCategory, department, date, pdfUrl);
 
-                    db.collection("documents")
-                            .add(document)
-                            .addOnSuccessListener(documentReference -> {
-                                progressUploadDoc.setVisibility(View.GONE);
-                                btnUploadDoc.setEnabled(true);
-                                Toast.makeText(AdminActivity.this, "Document Uploaded Successfully!", Toast.LENGTH_LONG).show();
+        db.collection("documents")
+                .add(document)
+                .addOnSuccessListener(documentReference -> {
+                    progressUploadDoc.setVisibility(View.GONE);
+                    btnUploadDoc.setEnabled(true);
+                    Toast.makeText(AdminActivity.this, "Document Added Successfully!", Toast.LENGTH_LONG).show();
 
-                                // Reset Document Form
-                                editDocTitle.setText("");
-                                editDocDepartment.setText("");
-                                editDocDate.setText("");
-                                selectedPdfUri = null;
-                                textSelectedFile.setText("No PDF file selected");
-                            })
-                            .addOnFailureListener(e -> {
-                                progressUploadDoc.setVisibility(View.GONE);
-                                btnUploadDoc.setEnabled(true);
-                                Toast.makeText(AdminActivity.this, "Database Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                            });
-                }))
+                    // Reset Document Form
+                    editDocTitle.setText("");
+                    editDocDepartment.setText("");
+                    editDocDate.setText("");
+                    editPdfUrl.setText("");
+                    selectedPdfUri = null;
+                    textSelectedFile.setText("No PDF file selected");
+                })
                 .addOnFailureListener(e -> {
                     progressUploadDoc.setVisibility(View.GONE);
                     btnUploadDoc.setEnabled(true);
-                    Toast.makeText(AdminActivity.this, "Storage Upload Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(AdminActivity.this, "Database Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 

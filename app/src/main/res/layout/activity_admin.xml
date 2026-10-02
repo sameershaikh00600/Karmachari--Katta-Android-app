@@ -126,11 +126,34 @@
                             android:layout_height="wrap_content" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="Direct PDF URL (e.g. https://.../file.pdf)">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edit_pdf_url"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textUri" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:id="@+id/text_or_separator"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="-- OR Choose PDF from Phone --"
+                        android:textColor="#757575"
+                        android:textStyle="italic" />
+
                     <TextView
                         android:id="@+id/text_selected_file"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="4dp"
                         android:text="No PDF file selected"
                         android:textColor="#757575" />
 
