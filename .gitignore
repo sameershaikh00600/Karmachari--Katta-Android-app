@@ -14,3 +14,4 @@
 .cxx
 local.properties
 DESIGN_NOTES.md
+app/src/main/java/com/karmcharikatta/app/AdminConfig.java

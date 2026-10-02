@@ -3,10 +3,13 @@ package com.karmcharikatta.app;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.InputType;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -83,9 +86,31 @@ public class MainActivity extends AppCompatActivity {
         cardAllEmployees.setOnClickListener(v -> openDocumentList("सर्व शासकीय कर्मचारी"));
         cardMsrtc.setOnClickListener(v -> openDocumentList("MSRTC कर्मचारी"));
 
-        btnMenu.setOnClickListener(v -> Toast.makeText(this, "Menu Clicked", Toast.LENGTH_SHORT).show());
+        btnMenu.setOnClickListener(v -> showAdminPinDialog());
         btnSearch.setOnClickListener(v -> openDocumentList("सर्व शासकीय कर्मचारी"));
         btnNotification.setOnClickListener(v -> Toast.makeText(this, "No new notifications", Toast.LENGTH_SHORT).show());
+    }
+
+    private void showAdminPinDialog() {
+        EditText inputPin = new EditText(this);
+        inputPin.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        inputPin.setHint("Default PIN: 1234");
+        inputPin.setPadding(40, 20, 40, 20);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Admin Panel Access")
+                .setMessage("Enter Admin Security PIN:")
+                .setView(inputPin)
+                .setPositiveButton("Login", (dialog, which) -> {
+                    String pin = inputPin.getText().toString().trim();
+                    if (pin.equals(AdminConfig.ADMIN_PIN)) {
+                        startActivity(new Intent(MainActivity.this, AdminActivity.class));
+                    } else {
+                        Toast.makeText(MainActivity.this, "Incorrect PIN!", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void openDocumentList(String category) {

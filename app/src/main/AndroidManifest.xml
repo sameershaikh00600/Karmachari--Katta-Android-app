@@ -28,6 +28,11 @@
             android:name=".DocumentListActivity"
             android:exported="false"
             android:label="Documents" />
+
+        <activity
+            android:name=".AdminActivity"
+            android:exported="false"
+            android:label="Admin Control Panel" />
     </application>
 
 </manifest>
