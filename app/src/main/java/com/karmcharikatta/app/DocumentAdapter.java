@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,18 +41,48 @@ public class DocumentAdapter extends RecyclerView.Adapter<DocumentAdapter.ViewHo
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         DocumentModel document = documentList.get(position);
-        holder.textTitle.setText(document.getTitle());
-        holder.textCategory.setText(document.getCategory());
-        holder.textDepartment.setText(document.getDepartment());
-        holder.textDate.setText(document.getDate());
+        
+        holder.textTitle.setText(document.getTitle() != null ? document.getTitle() : "Untitled Document");
+        holder.textCategory.setText(document.getCategory() != null ? document.getCategory() : "");
 
+        // Safely handle optional department field
+        if (document.getDepartment() != null && !document.getDepartment().trim().isEmpty()) {
+            holder.textDepartment.setText(document.getDepartment());
+            holder.textDepartment.setVisibility(View.VISIBLE);
+        } else {
+            holder.textDepartment.setVisibility(View.GONE);
+        }
+
+        // Safely handle optional date field
+        if (document.getDate() != null && !document.getDate().trim().isEmpty()) {
+            holder.textDate.setText(document.getDate());
+            holder.textDate.setVisibility(View.VISIBLE);
+        } else {
+            holder.textDate.setVisibility(View.GONE);
+        }
+
+        // Safe PDF launch logic (handles web URLs, Google Docs viewer fallback, and null safety)
         holder.btnViewPdf.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(Uri.parse(document.getPdfUrl()), "application/pdf");
-            intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-            
-            Intent chooser = Intent.createChooser(intent, "Open PDF");
-            context.startActivity(chooser);
+            String pdfUrl = document.getPdfUrl();
+            if (pdfUrl == null || pdfUrl.trim().isEmpty()) {
+                Toast.makeText(context, "PDF link not available", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            try {
+                // Try opening directly in Browser or PDF Viewer app
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(pdfUrl));
+                context.startActivity(intent);
+            } catch (Exception e) {
+                // Fallback to Google Docs PDF Viewer
+                try {
+                    String googleDocsUrl = "https://docs.google.com/viewer?url=" + Uri.encode(pdfUrl);
+                    Intent docsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(googleDocsUrl));
+                    context.startActivity(docsIntent);
+                } catch (Exception ex) {
+                    Toast.makeText(context, "Unable to open PDF link", Toast.LENGTH_SHORT).show();
+                }
+            }
         });
     }
 
@@ -82,9 +113,11 @@ public class DocumentAdapter extends RecyclerView.Adapter<DocumentAdapter.ViewHo
                 String filterPattern = constraint.toString().toLowerCase().trim();
 
                 for (DocumentModel item : documentListFull) {
-                    if (item.getTitle().toLowerCase().contains(filterPattern) ||
-                        item.getCategory().toLowerCase().contains(filterPattern) ||
-                        item.getDepartment().toLowerCase().contains(filterPattern)) {
+                    boolean matchesTitle = item.getTitle() != null && item.getTitle().toLowerCase().contains(filterPattern);
+                    boolean matchesCategory = item.getCategory() != null && item.getCategory().toLowerCase().contains(filterPattern);
+                    boolean matchesDept = item.getDepartment() != null && item.getDepartment().toLowerCase().contains(filterPattern);
+
+                    if (matchesTitle || matchesCategory || matchesDept) {
                         filteredList.add(item);
                     }
                 }
@@ -98,7 +131,9 @@ public class DocumentAdapter extends RecyclerView.Adapter<DocumentAdapter.ViewHo
         @Override
         protected void publishResults(CharSequence constraint, FilterResults results) {
             documentList.clear();
-            documentList.addAll((List) results.values);
+            if (results.values != null) {
+                documentList.addAll((List<DocumentModel>) results.values);
+            }
             notifyDataSetChanged();
         }
     };

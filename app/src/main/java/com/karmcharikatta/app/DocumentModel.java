@@ -1,10 +1,9 @@
 package com.karmcharikatta.app;
 
-import com.google.firebase.Timestamp;
-
 public class DocumentModel {
     private String title;
-    private String category;
+    private String category;    // Main section e.g. "GR", "Pension", "MSRTC", "All"
+    private String subCategory; // Sub-type e.g. "GRs", "Rules", "Forms"
     private String department;
     private String date;
     private String pdfUrl;
@@ -12,9 +11,10 @@ public class DocumentModel {
     // Required no-arg constructor for Firestore
     public DocumentModel() {}
 
-    public DocumentModel(String title, String category, String department, String date, String pdfUrl) {
+    public DocumentModel(String title, String category, String subCategory, String department, String date, String pdfUrl) {
         this.title = title;
         this.category = category;
+        this.subCategory = subCategory;
         this.department = department;
         this.date = date;
         this.pdfUrl = pdfUrl;
@@ -25,6 +25,9 @@ public class DocumentModel {
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+
+    public String getSubCategory() { return subCategory; }
+    public void setSubCategory(String subCategory) { this.subCategory = subCategory; }
 
     public String getDepartment() { return department; }
     public void setDepartment(String department) { this.department = department; }

@@ -131,6 +131,7 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/text_notice_title"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="महत्वाची सूचना"
@@ -139,6 +140,7 @@
                             android:textStyle="bold" />
 
                         <TextView
+                            android:id="@+id/text_notice_message"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="नवीन शासन निर्णय व अपडेटसाठी नोटिफिकेशन चालू ठेवा."
