@@ -124,9 +124,14 @@ public class DocumentListActivity extends AppCompatActivity {
                 }
 
                 if (value != null) {
-                    List<DocumentModel> fetchedDocuments = value.toObjects(DocumentModel.class);
                     documentList.clear();
-                    documentList.addAll(fetchedDocuments);
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : value.getDocuments()) {
+                        DocumentModel model = doc.toObject(DocumentModel.class);
+                        if (model != null) {
+                            model.setDocumentId(doc.getId());
+                            documentList.add(model);
+                        }
+                    }
                     adapter.updateList(new ArrayList<>(documentList));
 
                     if (documentList.isEmpty()) {

@@ -3,18 +3,24 @@ package com.karmcharikatta.app;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.Filter;
 import android.widget.Filterable;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,6 +90,57 @@ public class DocumentAdapter extends RecyclerView.Adapter<DocumentAdapter.ViewHo
                 }
             }
         });
+
+        // Delete button click
+        holder.btnDeleteDoc.setOnClickListener(v -> showDeleteConfirmationDialog(document));
+    }
+
+    private void showDeleteConfirmationDialog(DocumentModel document) {
+        if (document.getDocumentId() == null || document.getDocumentId().isEmpty()) {
+            Toast.makeText(context, "Cannot delete: Document ID not found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        EditText inputPin = new EditText(context);
+        inputPin.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        inputPin.setHint("Enter Admin Security PIN");
+        inputPin.setPadding(50, 30, 50, 30);
+
+        new AlertDialog.Builder(context)
+                .setTitle("Delete Document")
+                .setMessage("Are you sure you want to delete '" + (document.getTitle() != null ? document.getTitle() : "this document") + "'?\n\nEnter Admin Security PIN to confirm:")
+                .setView(inputPin)
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    String pin = inputPin.getText().toString().trim();
+                    if (pin.equals(AdminConfig.ADMIN_PIN)) {
+                        deleteDocumentFromFirebase(document);
+                    } else {
+                        Toast.makeText(context, "Incorrect Security PIN!", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteDocumentFromFirebase(DocumentModel document) {
+        String docId = document.getDocumentId();
+
+        // 1. Delete from Firestore "documents" collection
+        FirebaseFirestore.getInstance().collection("documents").document(docId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(context, "Document Deleted Successfully!", Toast.LENGTH_SHORT).show();
+
+                    // 2. Delete from Firebase Storage if it's a hosted storage file
+                    if (document.getPdfUrl() != null && document.getPdfUrl().contains("firebasestorage")) {
+                        try {
+                            FirebaseStorage.getInstance().getReferenceFromUrl(document.getPdfUrl()).delete();
+                        } catch (Exception ignored) {}
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(context, "Failed to delete: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     @Override
@@ -141,6 +198,7 @@ public class DocumentAdapter extends RecyclerView.Adapter<DocumentAdapter.ViewHo
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView textTitle, textCategory, textDepartment, textDate;
         MaterialButton btnViewPdf;
+        ImageButton btnDeleteDoc;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -149,6 +207,7 @@ public class DocumentAdapter extends RecyclerView.Adapter<DocumentAdapter.ViewHo
             textDepartment = itemView.findViewById(R.id.text_department);
             textDate = itemView.findViewById(R.id.text_date);
             btnViewPdf = itemView.findViewById(R.id.btn_view_pdf);
+            btnDeleteDoc = itemView.findViewById(R.id.btn_delete_doc);
         }
     }
 }

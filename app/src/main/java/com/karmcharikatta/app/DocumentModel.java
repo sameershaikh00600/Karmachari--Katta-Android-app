@@ -1,5 +1,7 @@
 package com.karmcharikatta.app;
 
+import com.google.firebase.firestore.Exclude;
+
 public class DocumentModel {
     private String title;
     private String category;    // Main section e.g. "GR", "Pension", "MSRTC", "All"
@@ -7,6 +9,9 @@ public class DocumentModel {
     private String department;
     private String date;
     private String pdfUrl;
+
+    @Exclude
+    private String documentId;
 
     // Required no-arg constructor for Firestore
     public DocumentModel() {}
@@ -19,6 +24,12 @@ public class DocumentModel {
         this.date = date;
         this.pdfUrl = pdfUrl;
     }
+
+    @Exclude
+    public String getDocumentId() { return documentId; }
+
+    @Exclude
+    public void setDocumentId(String documentId) { this.documentId = documentId; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
